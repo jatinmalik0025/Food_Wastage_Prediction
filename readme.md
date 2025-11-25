@@ -12,7 +12,8 @@ What’s included
 
 Screenshots attached to this README (see file names below):
 
-- <img width="1920" height="1080" alt="Screenshot (360)" src="https://github.com/user-attachments/assets/a7d0b135-fdc5-452b-a120-90f352c72376" />
+- ![Screenshot (360)](https://github.com/user-attachments/assets/b6220eae-8041-4c92-962d-3be36a1c6de0)
+
 — Login screen (desktop).
 - <img width="1920" height="1080" alt="Screenshot (361)" src="https://github.com/user-attachments/assets/bb159b64-0d79-4e11-ac20-8a754c67ded3" />
  — Main form (initial state).
@@ -129,5 +130,6 @@ If you want any of the following, I can update the README or code:
 ---
 
 *README generated on request. Screenshots are included in the repository under `/mnt/data/` as provided.*
+
 
 
