@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Predict Food Waste</title>
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      /* Core palette — unchanged theme */
+      --bg:#0b1220;      
+      --card:#0f1724;   
+      --muted:#94a3b8;  
+      --accent:#60a5fa; 
+      --text:#e6eef8;   
+      --accent-600:#3b82f6;
+      --accent-700:#2563eb;
+      --success:#34d399;
+      --danger:#ef4444;
+      --glass:rgba(15,23,36,0.6);
+      --border:rgba(255,255,255,0.06);
+      --ring:rgba(96,165,250,0.65);
+    }
+    *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;}
+    body{margin:0;background:radial-gradient(1200px 600px at 20% -10%, rgba(96,165,250,0.12), transparent 60%),
+                           radial-gradient(1000px 500px at 120% 10%, rgba(16,185,129,0.08), transparent 60%),
+                           linear-gradient(180deg,#041124 0%, var(--bg) 100%);
+         color:var(--text);}    
+
+    /* Page shell */
+    .container{max-width:1080px;margin:28px auto;padding:20px;}
+
+    /* Top bar */
+    .topbar{display:flex;align-items:center;gap:14px;justify-content:space-between;margin-bottom:16px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#22d3ee);
+          display:grid;place-items:center;box-shadow:0 6px 18px rgba(96,165,250,0.4)}
+    .logo svg{filter:drop-shadow(0 2px 6px rgba(0,0,0,0.35))}
+    .title{margin:0;font-size:20px;font-weight:800;letter-spacing:.2px}
+
+    .user-chip{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+               background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));}
+    .user-chip .hi{color:var(--muted);font-size:13px}
+
+    .logout-btn {background-color:var(--danger);color:white;border:none;padding:8px 14px;border-radius:10px;cursor:pointer;
+                 font-weight:700;transition:transform .12s ease, background-color .2s ease;}
+    .logout-btn:hover {background-color:#dc2626;transform:translateY(-1px)}
+
+    /* Hero */
+    .hero{position:relative;overflow:hidden;border:1px solid var(--border);border-radius:16px;padding:22px 20px;margin-bottom:16px;
+          background:linear-gradient( to bottom right, rgba(15,23,36,0.75), rgba(15,23,36,0.55) );
+          backdrop-filter: blur(10px); box-shadow:0 10px 30px rgba(2,6,23,0.55)}
+    .hero h1{margin:0 0 6px;font-size:22px}
+    .hero p{margin:0;color:var(--muted)}
+    .hero-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:6px 10px;margin-top:12px;font-size:12px;color:#a7f3d0;background:rgba(20,83,45,0.15)}
+
+    /* Cards */
+    .card{background:var(--card);padding:22px;border-radius:16px;border:1px solid var(--border);
+          box-shadow:0 8px 26px rgba(2,6,23,0.5)}
+
+    /* Form */
+    .form-grid{display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:14px}
+    @media(max-width:900px){ .form-grid{grid-template-columns:1fr} }
+
+    .field{display:flex;flex-direction:column;gap:6px}
+    label{color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.2px}
+    select,input{width:100%;padding:12px 12px;border-radius:10px;border:1px solid var(--border);
+                 background:linear-gradient(180deg,#061126 0%, #06101f 100%);color:var(--text);
+                 outline:none;transition:border-color .15s ease, box-shadow .15s ease}
+    select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--ring)}
+
+    .row-actions{display:flex;gap:10px;align-items:center;margin-top:2px;flex-wrap:wrap}
+    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:#041a38;padding:12px 16px;border-radius:12px;border:none;cursor:pointer;font-weight:800;letter-spacing:.2px;box-shadow:0 10px 22px rgba(96,165,250,0.25);transition:transform .14s ease, box-shadow .14s ease}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(96,165,250,0.32)}
+    .btn.secondary{background:#0b1a31;color:var(--text);border:1px solid var(--border);box-shadow:none}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+
+    .prediction{margin-top:4px;color:#c7f9d2;font-weight:800}
+
+    /* Layout below form */
+    .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
+    @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+    .kpi{background:linear-gradient(180deg,#0b172a,#0b1626);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px}
+    .kpi .meta{color:var(--muted);font-size:12px}
+    .kpi .value{font-size:20px;font-weight:800}
+
+    .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+    @media(max-width:900px){ .charts{grid-template-columns:1fr} }
+
+    .chart-card{padding:12px;border-radius:14px;border:1px solid var(--border);background:#0a1628}
+    .chart-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .chart-title h3{margin:0;font-size:14px;color:#cfe7ff}
+
+    /* Tips panel */
+    details.tips{margin-top:14px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    details.tips > summary{cursor:pointer;list-style:none;padding:12px 14px;background:#0a1a30;color:#a7f3d0;font-weight:700;display:flex;align-items:center;gap:10px}
+    details.tips[open] > summary{border-bottom:1px solid var(--border)}
+    .tips-content{padding:14px;color:var(--muted);display:grid;gap:8px}
+    .tip{display:flex;gap:10px;align-items:flex-start}
+    .tip svg{flex:0 0 18px}
+
+    /* Footer */
+    .footer{margin-top:18px;padding:14px;border-radius:12px;background:#041827;text-align:center;color:#a7f3d0;font-weight:700;border:1px solid var(--border)}
+
+    /* Micro-animations */
+    @keyframes pulseGlow {0%{box-shadow:0 0 0 0 rgba(96,165,250,.45)}70%{box-shadow:0 0 0 14px rgba(96,165,250,0)}100%{box-shadow:0 0 0 0 rgba(96,165,250,0)}}
+    .pulse{animation:pulseGlow 2.4s ease-out 1}
+
+    /* Helper badges */
+    .badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:999px;padding:6px 10px;font-size:12px;color:#cfe7ff;background:rgba(59,130,246,0.08)}
+    /* --- High-contrast dropdown tweaks (accessible) --- */
+  select{
+    appearance:none; -webkit-appearance:none; -moz-appearance:none;
+    background:#081427; /* darker for better contrast */
+    color:#f2f6ff; /* brighter text */
+    border-color:rgba(255,255,255,0.18); /* stronger border */
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23cfe7ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat; background-position:calc(100% - 12px) 50%; background-size:16px 16px;
+    padding-right:40px; /* make space for chevron */
+  }
+  select:hover{border-color:var(--accent-600)}
+  select:focus{border-color:var(--accent); box-shadow:0 0 0 4px var(--ring)}
+  select:disabled{opacity:.8; color:#9fb3c8; border-color:rgba(255,255,255,0.12)}
+  /* Dropdown list items (supported in most modern browsers) */
+  select option{background:#0b162b; color:#e6eef8}
+  /* For Firefox focus item contrast */
+  select option:checked, select option:hover{background:#0e223f; color:#ffffff}
+  /* Increase label contrast slightly */
+  label{color:#bac7d6}
+</style>
+
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3l7 4v10l-7 4-7-4V7l7-4z" stroke="white" opacity=".9" stroke-width="1.5"/>
+            <path d="M12 7v10M8 9l8 6M16 9l-8 6" stroke="white" opacity=".7" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <h1 class="title">Predict Food Waste</h1>
+        <span class="badge" title="Model-driven">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-7z" stroke="currentColor" opacity=".7" stroke-width="1.4"/></svg>
+          Smart Prediction
+        </span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div class="user-chip">
+          <span class="hi">Welcome,</span>
+          <strong>{{ session.get('user', 'Guest') }} 👋</strong>
+        </div>
+        <form action="{{ url_for('logout') }}" method="get">
+          <button type="submit" class="logout-btn">Logout</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+      <h1>Plan smarter. Waste less.</h1>
+      <p>Estimate your weekly food waste and spot the levers that reduce it — tailored to your household.</p>
+      <div class="hero-badge" aria-live="polite">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18" stroke="#34d399" stroke-width="1.6"/><path d="M7 8l4 4-4 4" stroke="#34d399" stroke-width="1.6"/></svg>
+        Tip: Higher awareness and better storage usually reduce waste.
+      </div>
+    </div>
+
+    <!-- Main card -->
+    <div class="card">
+      <form action="/predict" method="post" id="predict-form">
+        <div class="form-grid">
+          <div class="field">
+            <label for="Household_Size">Household Size (1-6)</label>
+            <select name="Household_Size" id="Household_Size" required>
+              {% for i in range(1,7) %}
+              <option value="{{i}}" {% if form_values and form_values['Household_Size']|int==i %}selected{% endif %}>{{i}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="Daily_Meal_Count">Daily Meal Count (1-4)</label>
+            <select name="Daily_Meal_Count" id="Daily_Meal_Count" required>
+              {% for i in range(1,5) %}
+              <option value="{{i}}" {% if form_values and form_values['Daily_Meal_Count']|int==i %}selected{% endif %}>{{i}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="Meal_Type">Meal Type</label>
+            <select name="Meal_Type" id="Meal_Type">
+              <option {% if form_values and form_values['Meal_Type']=='Vegetarian' %}selected{% endif %}>Vegetarian</option>
+              <option {% if form_values and form_values['Meal_Type']=='Non-Vegetarian' %}selected{% endif %}>Non-Vegetarian</option>
+              <option {% if form_values and form_values['Meal_Type']=='Mixed' %}selected{% endif %}>Mixed</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="Shopping_Habit">Shopping Habit</label>
+            <select name="Shopping_Habit" id="Shopping_Habit">
+              <option {% if form_values and form_values['Shopping_Habit']=='Daily' %}selected{% endif %}>Daily</option>
+              <option {% if form_values and form_values['Shopping_Habit']=='Weekly' %}selected{% endif %}>Weekly</option>
+              <option {% if form_values and form_values['Shopping_Habit']=='Bulk Buying' %}selected{% endif %}>Bulk Buying</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="Storage_Availability">Storage Availability</label>
+            <select name="Storage_Availability" id="Storage_Availability">
+              <option {% if form_values and form_values['Storage_Availability']=='Small' %}selected{% endif %}>Small</option>
+              <option {% if form_values and form_values['Storage_Availability']=='Medium' %}selected{% endif %}>Medium</option>
+              <option {% if form_values and form_values['Storage_Availability']=='Large' %}selected{% endif %}>Large</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="Awareness_of_Waste_Management">Awareness of Waste Management</label>
+            <select name="Awareness_of_Waste_Management" id="Awareness_of_Waste_Management">
+              <option {% if form_values and form_values['Awareness_of_Waste_Management']=='Low' %}selected{% endif %}>Low</option>
+              <option {% if form_values and form_values['Awareness_of_Waste_Management']=='Medium' %}selected{% endif %}>Medium</option>
+              <option {% if form_values and form_values['Awareness_of_Waste_Management']=='High' %}selected{% endif %}>High</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="Leftovers_Frequency">Leftovers Frequency</label>
+            <select name="Leftovers_Frequency" id="Leftovers_Frequency">
+              <option {% if form_values and form_values['Leftovers_Frequency']=='Never' %}selected{% endif %}>Never</option>
+              <option {% if form_values and form_values['Leftovers_Frequency']=='Sometimes' %}selected{% endif %}>Sometimes</option>
+              <option {% if form_values and form_values['Leftovers_Frequency']=='Often' %}selected{% endif %}>Often</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="Income_Range">Income Range</label>
+            <select name="Income_Range" id="Income_Range">
+              <option {% if form_values and form_values['Income_Range']=='Low' %}selected{% endif %}>Low</option>
+              <option {% if form_values and form_values['Income_Range']=='Medium' %}selected{% endif %}>Medium</option>
+              <option {% if form_values and form_values['Income_Range']=='High' %}selected{% endif %}>High</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="Cooking_Preference">Cooking Preference</label>
+            <select name="Cooking_Preference" id="Cooking_Preference">
+              <option {% if form_values and form_values['Cooking_Preference']=='Fresh Daily' %}selected{% endif %}>Fresh Daily</option>
+              <option {% if form_values and form_values['Cooking_Preference']=='Batch Cooking' %}selected{% endif %}>Batch Cooking</option>
+              <option {% if form_values and form_values['Cooking_Preference']=='Reheated' %}selected{% endif %}>Reheated</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="Cultural_Cuisine_Preference">Cultural Cuisine Preference</label>
+            <select name="Cultural_Cuisine_Preference" id="Cultural_Cuisine_Preference">
+              <option {% if form_values and form_values['Cultural_Cuisine_Preference']=='Indian' %}selected{% endif %}>Indian</option>
+              <option {% if form_values and form_values['Cultural_Cuisine_Preference']=='Chinese' %}selected{% endif %}>Chinese</option>
+              <option {% if form_values and form_values['Cultural_Cuisine_Preference']=='Italian' %}selected{% endif %}>Italian</option>
+              <option {% if form_values and form_values['Cultural_Cuisine_Preference']=='North Indian' %}selected{% endif %}>North Indian</option>
+              <option {% if form_values and form_values['Cultural_Cuisine_Preference']=='South Indian' %}selected{% endif %}>South Indian</option>
+              <option {% if form_values and form_values['Cultural_Cuisine_Preference']=='Fusion' %}selected{% endif %}>Fusion</option>
+              <option {% if form_values and form_values['Cultural_Cuisine_Preference']=='Street Food' %}selected{% endif %}>Street Food</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="Perishability_Awareness">Perishability Awareness</label>
+            <select name="Perishability_Awareness" id="Perishability_Awareness">
+              <option {% if form_values and form_values['Perishability_Awareness']=='Not aware' %}selected{% endif %}>Not aware</option>
+              <option {% if form_values and form_values['Perishability_Awareness']=='Somewhat aware' %}selected{% endif %}>Somewhat aware</option>
+              <option {% if form_values and form_values['Perishability_Awareness']=='Aware' %}selected{% endif %}>Aware</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="Seasonal_Variation">Seasonal Variation</label>
+            <select name="Seasonal_Variation" id="Seasonal_Variation">
+              <option {% if form_values and form_values['Seasonal_Variation']=='All year' %}selected{% endif %}>All year</option>
+              <option {% if form_values and form_values['Seasonal_Variation']=='Summer' %}selected{% endif %}>Summer</option>
+              <option {% if form_values and form_values['Seasonal_Variation']=='Winter' %}selected{% endif %}>Winter</option>
+              <option {% if form_values and form_values['Seasonal_Variation']=='Monsoon' %}selected{% endif %}>Monsoon</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row-actions">
+          <button class="btn pulse" type="submit" id="predict-btn">
+            <span id="btn-label">Predict</span>
+          </button>
+          <button class="btn secondary" type="reset">Reset</button>
+          {% if prediction is not none %}
+          <div class="prediction" id="prediction-text">Predicted weekly food waste is <span style="color:#b8f5c6">{{prediction}} kg/week</span></div>
+          {% endif %}
+        </div>
+      </form>
+
+      <!-- KPIs -->
+      <div class="kpis">
+        <div class="kpi" title="Your latest prediction">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 20V10m6 10V4m6 16v-6m4 6H2" stroke="#60a5fa" stroke-width="1.6"/></svg>
+          <div>
+            <div class="meta">Latest prediction</div>
+            <div class="value">{{ prediction if prediction is not none else '--'}}<span style="font-size:12px;margin-left:6px;color:var(--muted)">kg/week</span></div>
+          </div>
+        </div>
+        <div class="kpi" title="Awareness impact (heuristic)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v6m0 6v6M6 12h12" stroke="#34d399" stroke-width="1.6"/></svg>
+          <div>
+            <div class="meta">Awareness impact</div>
+            <div class="value">{{ 'High' if form_values and form_values['Awareness_of_Waste_Management']=='High' else ('Medium' if form_values and form_values['Awareness_of_Waste_Management']=='Medium' else 'Low') }}</div>
+          </div>
+        </div>
+        <div class="kpi" title="Storage capacity">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" rx="3" stroke="#a78bfa" stroke-width="1.6"/><path d="M4 10h16" stroke="#a78bfa" stroke-width="1.6"/></svg>
+          <div>
+            <div class="meta">Storage</div>
+            <div class="value">{{ form_values['Storage_Availability'] if form_values else '--' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts">
+        <div class="chart-card">
+          <div class="chart-title">
+            <h3>Food Waste Trend (10 Years)</h3>
+            <span class="badge">Source: your dataset</span>
+          </div>
+          <div id="chart1" style="height:320px"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">
+            <h3>Awareness vs Waste</h3>
+            <span class="badge">Exploratory</span>
+          </div>
+          <div id="chart2" style="height:320px"></div>
+        </div>
+      </div>
+
+      <!-- Tips / Guidance -->
+      <details class="tips">
+        <summary>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a7 7 0 017 7c0 4-4 5-4 8H9c0-3-4-4-4-8a7 7 0 017-7z" stroke="#f59e0b" stroke-width="1.4"/><circle cx="12" cy="19.5" r="1.5" fill="#f59e0b"/></svg>
+          Practical tips to reduce waste
+        </summary>
+        <div class="tips-content">
+          <div class="tip">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12l4 4L19 6" stroke="#34d399" stroke-width="1.8"/></svg>
+            Plan meals and shop with a list; avoid impulse bulk buys unless you have storage.
+          </div>
+          <div class="tip">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 7h18M7 3h10M7 21h10M3 17h18" stroke="#60a5fa" stroke-width="1.6"/></svg>
+            Label leftovers with dates; follow <em>first in, first out</em> in your fridge.
+          </div>
+          <div class="tip">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1016 0A8 8 0 004 12z" stroke="#a78bfa" stroke-width="1.6"/><path d="M12 7v6l3 2" stroke="#a78bfa" stroke-width="1.6"/></svg>
+            Batch-cook with portion control; freeze extras in single-meal containers.
+          </div>
+        </div>
+      </details>
+
+      <div class="footer">Thank you for using this app! — Developed with ❤ by Jatin</div>
+    </div>
+  </div>
+
+  <script>
+    // Plotly charts (coming from Jinja context)
+    const chart1 = {{ chart1 | safe }};
+    const chart2 = {{ chart2 | safe }};
+    Plotly.newPlot('chart1', chart1.data, chart1.layout, {displayModeBar:false});
+    Plotly.newPlot('chart2', chart2.data, chart2.layout, {displayModeBar:false});
+
+    // Button loading state on submit
+    const form = document.getElementById('predict-form');
+    const btn  = document.getElementById('predict-btn');
+    const label= document.getElementById('btn-label');
+
+    form.addEventListener('submit', () => {
+      btn.disabled = true;
+      label.textContent = 'Predicting…';
+    });
+
+    // Toast when a prediction exists
+    {% if prediction is not none %}
+    (function(){
+      const toast = document.createElement('div');
+      toast.textContent = 'Prediction updated';
+      toast.style.position='fixed';
+      toast.style.bottom='18px';
+      toast.style.right='18px';
+      toast.style.background='linear-gradient(180deg,#0b1d34,#0a172b)';
+      toast.style.border='1px solid var(--border)';
+      toast.style.color='var(--text)';
+      toast.style.padding='10px 14px';
+      toast.style.borderRadius='12px';
+      toast.style.boxShadow='0 8px 24px rgba(2,6,23,.55)';
+      toast.style.opacity='0';
+      toast.style.transition='opacity .25s ease, transform .25s ease';
+      toast.style.transform='translateY(8px)';
+      document.body.appendChild(toast);
+      requestAnimationFrame(()=>{toast.style.opacity='1';toast.style.transform='translateY(0)'});
+      setTimeout(()=>{toast.style.opacity='0';toast.style.transform='translateY(8px)';setTimeout(()=>toast.remove(),250)}, 1800);
+    })();
+    {% endif %}
+  </script>
+</body>
+</html>

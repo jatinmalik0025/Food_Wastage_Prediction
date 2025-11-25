@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign Up | Food Waste Predictor</title>
+
+  <style>
+    :root { --bg:#0b1220; --card:#0f1724; --muted:#94a3b8; --accent:#60a5fa; --text:#e6eef8; --border:rgba(255,255,255,0.08);} 
+    *{box-sizing:border-box;font-family:'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial}
+    body{margin:0;background:radial-gradient(1200px 600px at 20% -10%, rgba(96,165,250,0.12), transparent 60%), linear-gradient(180deg,#041124 0%, var(--bg) 100%);color:var(--text);height:100vh;display:flex;align-items:center;justify-content:center}
+    .card{background:rgba(15,23,36,0.8);border:1px solid var(--border);padding:34px;border-radius:14px;max-width:420px;width:100%}
+    h2{color:var(--accent);margin:0 0 8px}
+    label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}
+    input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#061126;color:var(--text);margin-bottom:12px}
+    .btn{background:linear-gradient(180deg,var(--accent),#3b82f6);color:#042036;padding:12px;border-radius:12px;border:none;cursor:pointer;width:100%;font-weight:700}
+    .link{color:var(--accent);text-decoration:none;font-weight:700}
+    .error{color:#fca5a5;margin-bottom:10px}
+    .muted{color:var(--muted);font-size:13px;text-align:center;margin-top:12px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Create an account</h2>
+    <p style="color:var(--muted);margin-top:6px;margin-bottom:18px;font-size:14px">Sign up with your email to access predictions.</p>
+
+    <div id="error" class="error"></div>
+
+    <form id="signup-form">
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="you@example.com" required />
+
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Choose a strong password" required />
+
+      <label for="confirm">Confirm password</label>
+      <input id="confirm" type="password" placeholder="Repeat password" required />
+
+      <button class="btn" type="submit">Sign up</button>
+    </form>
+
+    <div class="muted">Already have an account? <a class="link" href="/login">Login</a></div>
+  </div>
+
+  <!-- Firebase JS SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <script>
+    // Your Firebase configuration (from user)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCrQGdU0hTWaCHvsrsvgQu7RhsxUZuqHEg",
+      authDomain: "blog-2684f.firebaseapp.com",
+      projectId: "blog-2684f",
+      storageBucket: "blog-2684f.firebasestorage.app",
+      messagingSenderId: "1081915254693",
+      appId: "1:1081915254693:web:257425d8bad1118c01aa4c",
+      measurementId: "G-HYD130Q7SC"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Handle signup
+    const form = document.getElementById('signup-form');
+    const errorEl = document.getElementById('error');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.textContent = '';
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirm = document.getElementById('confirm').value;
+      if (password !== confirm) { errorEl.textContent = 'Passwords do not match.'; return; }
+      try {
+        const userCred = await auth.createUserWithEmailAndPassword(email, password);
+        // Send email verification (optional)
+        try { await userCred.user.sendEmailVerification(); } catch (_) {}
+        // On success redirect to login page (or index)
+        window.location.href = '/login';
+      } catch (err) {
+        errorEl.textContent = err.message || 'Signup failed';
+      }
+    });
+  </script>
+</body>
+</html>
